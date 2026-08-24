@@ -276,12 +276,13 @@ namespace GenOnlineService.Controllers
 
 		private async Task ProcessWSMessage(UserWebSocketInstance sourceWS, UserSession sourceUserSession, WebSocketReceiveResult receiveResult, ArraySegment<byte> buffer)
 		{
-			SharedUserData sourceUserData = WebSocketManager.GetSharedDataForUser(sourceUserSession.m_UserID);
+			SharedUserData? sourceUserData = WebSocketManager.GetSharedDataForUser(sourceUserSession.m_UserID);
 
 			// shared data can legitimately be gone (session torn down concurrently) - dereferencing it below would
 			// throw straight out of the receive loop and kill the connection
 			if (sourceUserData == null)
 			{
+				Console.WriteLine($"[ProcessWSMessage] sourceUserData is NULL for user {sourceUserSession.m_UserID}!");
 				return;
 			}
 
@@ -310,13 +311,15 @@ namespace GenOnlineService.Controllers
 			{
 				envelope = JsonSerializer.Deserialize<WSMessageEnvelope>(payload, JsonOpts);
 			}
-			catch
+			catch (Exception ex)
 			{
-				// malformed
+				string text = Encoding.UTF8.GetString(payload);
+				Console.WriteLine($"[ProcessWSMessage] JSON deserialize error on payload '{text}': {ex.Message}");
 				return;
 			}
 
 			EWebSocketMessageID msgID = (EWebSocketMessageID)envelope.msg_id;
+			Console.WriteLine($"[ProcessWSMessage] Received msgID={msgID} ({envelope.msg_id}) from user {sourceUserData.m_strDisplayName}");
 
 			// Only allocate a Dictionary when we actually need arbitrary fields
 			Dictionary<string, JsonElement>? data = null;
