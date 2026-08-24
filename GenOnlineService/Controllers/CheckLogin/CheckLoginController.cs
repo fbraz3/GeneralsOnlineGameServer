@@ -151,6 +151,7 @@ namespace GenOnlineService.Controllers
 								await Database.Users.CreateUserIfNotExists_DevAccount(db, user_id, strDisplayName);
 
 								// for dev, just mark it as logged in, code further down will consume it
+								PendingLoginManager.AddPendingLogin(gameCode);
 								PendingLoginManager.UpdatePendingLogin(gameCode, EPendingLoginState.LoginSuccess, user_id);
 							}
 #endif
