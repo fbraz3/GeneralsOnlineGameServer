@@ -440,8 +440,8 @@ namespace GenOnlineService.Controllers
 
 						// Serialize once before broadcasting
 						byte[] bytesJSON = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(outboundMsg));
-
 						// send it to everyone in the same room
+						int broadcastCount = 0;
 						foreach (var sessionDataByClient in WebSocketManager.GetUserDataCache())
 						{
 							foreach (var sessionData in sessionDataByClient.Value)
@@ -449,6 +449,7 @@ namespace GenOnlineService.Controllers
 								UserSession targetSess = sessionData.Value;
 								if (targetSess.networkRoomID == sourceUserSession.networkRoomID)
 								{
+									// get shared user data
 									SharedUserData? targetUserSharedData = WebSocketManager.GetSharedDataForUser(targetSess.m_UserID);
 
 									if (targetUserSharedData != null)
@@ -460,11 +461,14 @@ namespace GenOnlineService.Controllers
 										if (!bBlocked)
 										{
 											targetSess.QueueWebsocketSend(bytesJSON);
+											broadcastCount++;
 										}
 									}
 								}
 							}
 						}
+
+						Console.WriteLine($"[WS CHAT] User {sourceUserData.m_strDisplayName} (room {sourceUserSession.networkRoomID}): '{chatMessage.message}' -> queued to {broadcastCount} sessions");
 
 						// send message to discord
 						if (Program.g_Discord != null && chatMessage.message != null)
@@ -478,6 +482,7 @@ namespace GenOnlineService.Controllers
 					if (data != null && data.ContainsKey("room"))
 					{
 						Int16 roomID = data["room"].GetInt16();
+						Console.WriteLine($"[WS ROOM CHANGE] User {sourceUserData.m_strDisplayName} changed room to {roomID}");
 						await sourceUserSession.UpdateSessionNetworkRoom(roomID);
 					}
 				}

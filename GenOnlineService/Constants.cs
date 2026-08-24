@@ -1012,16 +1012,19 @@ namespace GenOnlineService
 		public async Task TickWebsocket(CancellationToken tickToken = default)
 		{
 			// Do we have a connection to send on?
-			UserWebSocketInstance websocketForUser = WebSocketManager.GetWebSocketForSession(this);
+			UserWebSocketInstance? websocketForUser = WebSocketManager.GetWebSocketForSession(this);
 			if (websocketForUser != null)
 			{
 				const int maxMessagesSendPerFrame = 50;
 				int messagesSent = 0;
 				// start dequeing and sending
-				while (!tickToken.IsCancellationRequested && messagesSent < maxMessagesSendPerFrame && m_lstPendingWebsocketSends.TryDequeue(out byte[] packetData))
+				while (!tickToken.IsCancellationRequested && messagesSent < maxMessagesSendPerFrame && m_lstPendingWebsocketSends.TryDequeue(out byte[]? packetData))
 				{
-					await websocketForUser.SendAsync(packetData, WebSocketMessageType.Text, tickToken);
-					++messagesSent;
+					if (packetData != null)
+					{
+						await websocketForUser.SendAsync(packetData, WebSocketMessageType.Text);
+						++messagesSent;
+					}
 				}
 			}
 		}
@@ -1226,69 +1229,24 @@ namespace GenOnlineService
 
 		public async Task SendAsync(byte[] buffer, WebSocketMessageType messageType, CancellationToken externalToken = default)
 		{
-			if (m_SockInternal != null)
+			if (m_SockInternal != null && m_SockInternal.State == WebSocketState.Open)
 			{
 				// WebSocket.SendAsync must never be called concurrently on the same socket or the frame stream gets
 				// corrupted. Several paths (tick drain, pongs, direct sends) can send at the same time, so serialize here.
 				await m_SendLock.WaitAsync();
 				try
 				{
-					// should we chunked send?
-					/*
-					const int frameMax = 99999999;
-					if (buffer.Length > frameMax)
+					if (m_SockInternal.State != WebSocketState.Open)
 					{
-						int bytresRemaining = buffer.Length;
-						int numFrames = (int)Math.Ceiling((float)buffer.Length / (float)frameMax);
-
-						System.Diagnostics.Debug.WriteLine("[Websocket] sending {0} bytes in {1} chunks", bytresRemaining, numFrames);
-
-						for (int i = 0; i < numFrames; ++i)
-						{
-							int bytesToSend = Math.Min(bytresRemaining, frameMax);
-							bool bLastFrame = i == numFrames - 1;
-
-							
-							ArraySegment<byte> arrSegment = new ArraySegment<byte>(buffer, i * frameMax, bytesToSend);
-							System.Diagnostics.Debug.WriteLine("[Websocket] send frame {0} with {1} bytes (last: {2})", i, bytesToSend, bLastFrame);
-							await m_SockInternal.SendAsync(arrSegment, messageType, bLastFrame, CancellationToken.None);
-
-							bytresRemaining -= bytesToSend;
-						}
-
+						return;
 					}
-					else // just send whole
-					{
-						await m_SockInternal.SendAsync(buffer, messageType, true, CancellationToken.None);
-					}
-					*/
 
-					CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(externalToken);
-					try
-					{
-						cts.CancelAfter(TimeSpan.FromMilliseconds(500));
-						await m_SockInternal.SendAsync(buffer, messageType, true, cts.Token);
-					}
-					finally
-					{
-						try
-						{
-							// Disarm the pending CancelAfter timer before disposing to prevent a race condition
-						// where the timer fires concurrently with Dispose(), causing ObjectDisposedException
-						// in CancellationTokenSource.ExecuteCallbackHandlers.
-						cts.CancelAfter(Timeout.InfiniteTimeSpan);
-						cts.Dispose();
-						}
-						catch (ObjectDisposedException)
-						{
-							// The linked token may be disposed if the external token (parent CancellationTokenSource)
-							// fires its timeout while we're disposing this instance. This is safe to ignore.
-						}
-					}
+					using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+					await m_SockInternal.SendAsync(buffer, messageType, true, cts.Token);
 				}
-				catch
+				catch (Exception ex)
 				{
-
+					Console.WriteLine($"[WS Send Error] User {m_UserID}: {ex.Message}");
 				}
 				finally
 				{
