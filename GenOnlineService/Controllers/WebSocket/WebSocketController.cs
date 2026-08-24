@@ -48,7 +48,24 @@ namespace GenOnlineService.Controllers
 		};
 
 		// GeoIP DB is designed to be reused; opening per request is expensive
-		private static readonly DatabaseReader GeoIpReader = new("data/GeoLite2-City.mmdb");
+		private static readonly DatabaseReader? GeoIpReader = InitGeoIpReader();
+
+		private static DatabaseReader? InitGeoIpReader()
+		{
+			try
+			{
+				string path = "data/GeoLite2-City.mmdb";
+				if (System.IO.File.Exists(path))
+				{
+					return new DatabaseReader(path);
+				}
+			}
+			catch (Exception ex)
+			{
+				Console.WriteLine($"[GeoIP] Optional GeoLite2 database not loaded: {ex.Message}");
+			}
+			return null;
+		}
 
 		private struct WSMessageEnvelope
 		{
@@ -86,19 +103,22 @@ namespace GenOnlineService.Controllers
 
 			try
 			{
-				var city = GeoIpReader.City(ipAddress);
-
-				ipContinent = city.Continent.Code;
-				ipCountry = city.Country.IsoCode;
-
-				if (city.Location.Longitude != null)
+				if (GeoIpReader != null)
 				{
-					dLongitude = (double)city.Location.Longitude;
-				}
+					var city = GeoIpReader.City(ipAddress);
 
-				if (city.Location.Latitude != null)
-				{
-					dLatitude = (double)city.Location.Latitude;
+					ipContinent = city.Continent.Code;
+					ipCountry = city.Country.IsoCode;
+
+					if (city.Location.Longitude != null)
+					{
+						dLongitude = (double)city.Location.Longitude;
+					}
+
+					if (city.Location.Latitude != null)
+					{
+						dLatitude = (double)city.Location.Latitude;
+					}
 				}
 			}
 			catch
