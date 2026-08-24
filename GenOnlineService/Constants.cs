@@ -356,12 +356,27 @@ namespace GenOnlineService
 
 		public static async Task Tick()
 		{
-			// Give the entire tick a 20 ms deadline. All users drain concurrently via
+			// Give the entire tick a configurable deadline (default 1000 ms). All users drain concurrently via
 			// Task.WhenAll, so a slow/stuck client cannot delay others. If the deadline
 			// fires, the CancellationToken propagates into each in-flight SendAsync and
 			// into the dequeue loop guard, so the stuck user is skipped and their unsent
 			// messages stay in the queue for the next tick.
-			using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(20));
+			int tickTimeoutMs = 1000;
+			string? envTimeout = Environment.GetEnvironmentVariable("NGMP_WS_TICK_TIMEOUT_MS");
+			if (!string.IsNullOrEmpty(envTimeout) && int.TryParse(envTimeout, out int parsedTimeout))
+			{
+				tickTimeoutMs = parsedTimeout;
+			}
+			else if (Program.g_Config != null)
+			{
+				var cfgTimeout = Program.g_Config.GetValue<int?>("WebSocket:TickTimeoutMs");
+				if (cfgTimeout.HasValue)
+				{
+					tickTimeoutMs = cfgTimeout.Value;
+				}
+			}
+
+			using var cts = new CancellationTokenSource(TimeSpan.FromMilliseconds(tickTimeoutMs));
 			await Task.WhenAll(m_dictUserSessions.Values.SelectMany(inner => inner.Values).Select(sess => sess.TickWebsocket(cts.Token)));
 		}
 
