@@ -507,13 +507,30 @@ namespace GenOnlineService
 			// we need human members, not real members
 			int numHumanMembers = GetNumberOfHumans();
 
-			if (numHumanMembers == 0 || bNeedsHostMigrate)
+			bool bDestroyOnHostLeave = true;
+			if (Program.g_Config != null)
+			{
+				bDestroyOnHostLeave = Program.g_Config.GetSection("Lobby").GetValue<bool?>("destroy_on_host_leave") ?? true;
+			}
+
+			if (numHumanMembers == 0 || (bNeedsHostMigrate && bDestroyOnHostLeave))
 			{
 				Console.ForegroundColor = ConsoleColor.Cyan;
 				Console.WriteLine($"DeleteLobby: Source A (Owner left [{leavingUserID}] or no humans left [{numHumanMembers}])");
 				Console.ForegroundColor = ConsoleColor.Gray;
 
 				OnLobbyNeedsDestroyed?.Invoke(this);
+			}
+			else
+			{
+				// Host migration is only meaningful in the lobby setup phase.
+				// During an active game the P2P host is determined by the game engine,
+				// and migrating the server-side owner causes confusing mid-game lobby
+				// state broadcasts to surviving clients.
+				if (bNeedsHostMigrate && State != ELobbyState.INGAME)
+				{
+					DoHostMigration();
+				}
 			}
 		}
 
