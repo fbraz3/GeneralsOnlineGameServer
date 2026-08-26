@@ -457,15 +457,15 @@ namespace GenOnlineService
 			{
 				if (owner.m_client_id == KnownClients.EKnownClients.generalsx_macos)
 				{
-					strPlatform = "[Mac]";
+					strPlatform = "[MAC]";
 				}
 				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_linux)
 				{
-					strPlatform = "[Linux]";
+					strPlatform = "[LIN]";
 				}
 				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_windows || owner.m_client_id == KnownClients.EKnownClients.gen_online_30hz || owner.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
 				{
-					strPlatform = "[Win]";
+					strPlatform = "[WIN]";
 				}
 			}
 
@@ -818,6 +818,28 @@ public async Task FinalizeACChecks()
 			if (dupesSeen > 0)
 			{
 				strDisplayName = String.Format("{0} ({1})", strDisplayName, dupesSeen);
+			}
+
+			string strPlatformTag = "";
+			bool bShowPlayerPlatform = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_player_platform_tag") ?? true;
+			if (bShowPlayerPlatform)
+			{
+				if (playerSession.m_client_id == KnownClients.EKnownClients.generalsx_macos)
+				{
+					strPlatformTag = " [MAC]";
+				}
+				else if (playerSession.m_client_id == KnownClients.EKnownClients.generalsx_linux)
+				{
+					strPlatformTag = " [LIN]";
+				}
+				else if (playerSession.m_client_id == KnownClients.EKnownClients.generalsx_windows || playerSession.m_client_id == KnownClients.EKnownClients.gen_online_30hz || playerSession.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
+				{
+					strPlatformTag = " [WIN]";
+				}
+			}
+			if (!string.IsNullOrEmpty(strPlatformTag) && !strDisplayName.EndsWith(strPlatformTag))
+			{
+				strDisplayName += strPlatformTag;
 			}
 
 			// only apply lobby prefs if not QM
