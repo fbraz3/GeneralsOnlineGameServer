@@ -447,7 +447,7 @@ namespace GenOnlineService
 			Owner = owner.m_UserID;
 
 			bool bShowContinent = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_continent_tag") ?? true;
-			bool bShowPlatform = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_platform_tag") ?? true;
+			bool bShowPlatform = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_platform_tag") ?? false;
 			bool bShowAnticheat = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_anticheat_tag") ?? true;
 
 			string strContinentPrefix = (bShowContinent && !string.IsNullOrEmpty(owner.m_strContinent)) ? String.Format("[{0}]", owner.m_strContinent) : "";
@@ -830,7 +830,7 @@ public async Task FinalizeACChecks()
 				}
 				else if (playerSession.m_client_id == KnownClients.EKnownClients.generalsx_linux)
 				{
-					strPlatformTag = " [LIN]";
+					strPlatformTag = " [LNX]";
 				}
 				else if (playerSession.m_client_id == KnownClients.EKnownClients.generalsx_windows || playerSession.m_client_id == KnownClients.EKnownClients.gen_online_30hz || playerSession.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
 				{

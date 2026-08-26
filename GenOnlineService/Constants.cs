@@ -800,6 +800,25 @@ namespace GenOnlineService
 											strDisplayName += " [WEBCHAT]";
 										}
 									}
+									else
+									{
+										bool bShowPlayerPlatform = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_player_platform_tag") ?? true;
+										if (bShowPlayerPlatform)
+										{
+											if (sessionData.Value.m_client_id == KnownClients.EKnownClients.generalsx_macos)
+											{
+												strDisplayName += " [MAC]";
+											}
+											else if (sessionData.Value.m_client_id == KnownClients.EKnownClients.generalsx_linux)
+											{
+												strDisplayName += " [LIN]";
+											}
+											else if (sessionData.Value.m_client_id == KnownClients.EKnownClients.generalsx_windows || sessionData.Value.m_client_id == KnownClients.EKnownClients.gen_online_30hz || sessionData.Value.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
+											{
+												strDisplayName += " [WIN]";
+											}
+										}
+									}
 									
 
 									memberListUpdate.members.Add(new RoomMember(sess.m_UserID, strDisplayName, sharedUserData.IsAdmin()));
