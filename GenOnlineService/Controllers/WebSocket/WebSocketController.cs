@@ -54,7 +54,12 @@ namespace GenOnlineService.Controllers
 		{
 			try
 			{
-				string path = "data/GeoLite2-City.mmdb";
+				bool bEnabled = Program.g_Config.GetSection("GeoIP").GetValue<bool?>("enabled") ?? true;
+				if (!bEnabled)
+				{
+					return null;
+				}
+				string path = Program.g_Config.GetSection("GeoIP").GetValue<string>("database_path") ?? "data/GeoLite2-City.mmdb";
 				if (System.IO.File.Exists(path))
 				{
 					return new DatabaseReader(path);
@@ -96,10 +101,10 @@ namespace GenOnlineService.Controllers
 			}
 
 			string ipAddress = IPHelpers.NormalizeIP(HttpContext.Connection.RemoteIpAddress?.ToString());
-			string ipContinent = "NA";
-			string ipCountry = "US";
-			double dLongitude = 38.8977; // the whitehouse;
-			double dLatitude = 77.0365f; // the whitehouse;
+			string ipContinent = Program.g_Config.GetSection("GeoIP").GetValue<string>("default_continent") ?? "SA";
+			string ipCountry = Program.g_Config.GetSection("GeoIP").GetValue<string>("default_country") ?? "BR";
+			double dLongitude = -46.6333; // default Sao Paulo
+			double dLatitude = -23.5505f;
 
 			try
 			{

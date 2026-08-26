@@ -446,22 +446,44 @@ namespace GenOnlineService
 			LobbyID = lobby_id;
 			Owner = owner.m_UserID;
 
-			string strAnticheatName = "OTHER AC";
-			if (inAnticheatID == EKnownAnticheatID.NONE)
+			bool bShowContinent = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_continent_tag") ?? true;
+			bool bShowPlatform = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_platform_tag") ?? true;
+			bool bShowAnticheat = Program.g_Config.GetSection("Lobby").GetValue<bool?>("show_anticheat_tag") ?? true;
+
+			string strContinentPrefix = (bShowContinent && !string.IsNullOrEmpty(owner.m_strContinent)) ? String.Format("[{0}]", owner.m_strContinent) : "";
+
+			string strPlatform = "";
+			if (bShowPlatform)
 			{
-				strAnticheatName = "\u26C9";
-			}
-			else if (inAnticheatID == EKnownAnticheatID.GO_INTEGRATED_AC)
-			{
-				strAnticheatName = "\u26CA";
-			}
-			else if (inAnticheatID == EKnownAnticheatID.EASY_ANTICHEAT)
-			{
-				strAnticheatName = "\u26CA";
+				if (owner.m_client_id == KnownClients.EKnownClients.generalsx_macos)
+				{
+					strPlatform = "[Mac]";
+				}
+				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_linux)
+				{
+					strPlatform = "[Linux]";
+				}
+				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_windows || owner.m_client_id == KnownClients.EKnownClients.gen_online_30hz || owner.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
+				{
+					strPlatform = "[Win]";
+				}
 			}
 
+			string strAnticheatName = "";
+			if (bShowAnticheat && (inAnticheatID == EKnownAnticheatID.GO_INTEGRATED_AC || inAnticheatID == EKnownAnticheatID.EASY_ANTICHEAT))
+			{
+				strAnticheatName = "[AC]";
+			}
 
-			Name = String.Format("[{0}][{1}] {2}", owner.m_strContinent, strAnticheatName, name);
+			string strPrefix = (strContinentPrefix + strPlatform + strAnticheatName).Trim();
+			if (!string.IsNullOrEmpty(strPrefix))
+			{
+				Name = String.Format("{0} {1}", strPrefix, name);
+			}
+			else
+			{
+				Name = name;
+			}
 			Region = String.Format("{0}", owner.GetFullContinentName());
 			m_dHostLatitude = owner.m_dLatitude;
 			m_dHostLongitude = owner.m_dLongitude;
