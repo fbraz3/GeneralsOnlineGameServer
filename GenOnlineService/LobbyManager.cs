@@ -461,7 +461,7 @@ namespace GenOnlineService
 				}
 				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_linux)
 				{
-					strPlatform = "[LIN]";
+					strPlatform = "[LNX]";
 				}
 				else if (owner.m_client_id == KnownClients.EKnownClients.generalsx_windows || owner.m_client_id == KnownClients.EKnownClients.gen_online_30hz || owner.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
 				{

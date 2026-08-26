@@ -811,7 +811,7 @@ namespace GenOnlineService
 											}
 											else if (sessionData.Value.m_client_id == KnownClients.EKnownClients.generalsx_linux)
 											{
-												strDisplayName += " [LIN]";
+												strDisplayName += " [LNX]";
 											}
 											else if (sessionData.Value.m_client_id == KnownClients.EKnownClients.generalsx_windows || sessionData.Value.m_client_id == KnownClients.EKnownClients.gen_online_30hz || sessionData.Value.m_client_id == KnownClients.EKnownClients.gen_online_60hz)
 											{
